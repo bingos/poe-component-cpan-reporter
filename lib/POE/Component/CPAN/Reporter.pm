@@ -6,7 +6,7 @@ use POE qw(Wheel::Run);
 use Storable;
 use vars qw($VERSION);
 
-$VERSION = '0.04';
+$VERSION = '0.06';
 
 my $GOT_KILLFAM;
 
@@ -535,11 +535,18 @@ see the section of this document relating to your platform.
 You are responsible for installing and configuring L<CPAN> and L<CPAN::Reporter> and setting up
 a suitable perl smoking environment.
 
+=head1 DEPRECATION NOTICE
+
+POE::Component::CPAN::Reporter has been superceded by L<POE::Component::SmokeBox>. The L<minireporter>
+script has been superceded by L<App::SmokeBox::Mini>.
+
+Consider this module deprecated.
+
 =head1 CONSTRUCTOR
 
 =over
 
-=item spawn
+=item C<spawn>
 
 Spawns a new component session and waits for requests. Takes the following optional arguments:
 
@@ -560,40 +567,40 @@ Returns a POE::Component::CPAN::Reporter object.
 
 =over
 
-=item session_id
+=item C<session_id>
 
 Returns the POE::Session ID of the component's session.
 
-=item pending_jobs
+=item C<pending_jobs>
 
 In a scalar context returns the number of currently pending jobs. In a list context, returns a list of hashrefs
 which are the jobs currently waiting in the job queue.
 
-=item current_job
+=item C<current_job>
 
 Returns a hashref containing details of the currently executing smoke job. Returns undef if there isn't a job currently running.
 
-=item current_log
+=item C<current_log>
 
 Returns an arrayref of log output from the currently executing smoke job. Returns undef if there isn't a job currently running.
 
-=item shutdown
+=item C<shutdown>
 
 Terminates the component. Any pending jobs are cancelled and the currently running job is allowed to complete gracefully. Requires no additional parameters.
 
-=item pause_queue
+=item C<pause_queue>
 
 Pauses processing of the jobs. The current job will finish processing, but any pending jobs will not be processed until the queue is resumed. This does not affect the continued submission of jobs to the queue.
 
-=item resume_queue
+=item C<resume_queue>
 
 Resumes the processing of the pending jobs queue if it has been previously paused.
 
-=item paused
+=item C<paused>
 
 Returns a true value if the job queue is paused or a false value otherwise.
 
-=item statistics
+=item C<statistics>
 
 Returns some statistical that the component gathers. In a list context returns a list of data. In a scalar
 context returns an arrayref of the said data.
@@ -625,21 +632,21 @@ possible future API clashes.
 
 =over
 
-=item submit
+=item C<submit>
 
-=item push
+=item C<push>
 
 Inserts the requested job at the end of the queue ( if there is one ).
 
-=item unshift
+=item C<unshift>
 
 Inserts the requested job at the head of the queue ( if there is one ). Guarantees that that job is processed next.
 
-=item shutdown
+=item C<shutdown>
 
 Terminates the component. Any pending jobs are cancelled and the currently running job is allowed to complete gracefully. Requires no additional parameters.
 
-=item check
+=item C<check>
 
 Checks whether L<CPAN::Reporter> is installed. Takes one parameter a hashref with the following keys 
 defined:
@@ -651,7 +658,7 @@ defined:
 It is possible to pass arbitrary keys in the hash. These should be proceeded with an underscore to avoid
 possible future API clashes.
   
-=item indices
+=item C<indices>
 
 Forces an update of the CPAN indices. Takes one parameter, a hashref with the following keys defined:
 
@@ -700,7 +707,7 @@ Chris 'BinGOs' Williams <chris@bingosnet.co.uk>
 
 =head1 LICENSE
 
-Copyright C<(c)> Chris Williams.
+Copyright E<copy> Chris Williams.
 
 This module may be used, modified, and distributed under the same terms as Perl itself. Please see the license that came with your Perl distribution for details.
 
@@ -711,6 +718,10 @@ Many thanks to all the people who have helped me with developing this module.
 Especially to Andreas J. König for L<CPAN> and David Golden for L<CPAN::Reporter>
 
 =head1 SEE ALSO
+
+L<POE::Component::SmokeBox>
+
+L<App::SmokeBox::Mini>
 
 L<minireporter>
 

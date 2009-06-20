@@ -4,16 +4,16 @@ NAME
 
 SYNOPSIS
       use strict;
-      use POE qw(Component::CPAN::Reporter);
+      use POE qw(Component::CPAN::Reporter Component::SmokeBox::Recent);
       use Getopt::Long;
-      
-  $|=1;
-      
-  my ($perl, $jobs);
-      
-  GetOptions( 'perl=s' => \$perl, 'jobs=s' => \$jobs );
-      
-  my @pending;
+  
+      $|=1;
+  
+      my ($perl, $jobs, $recenturl);
+  
+      GetOptions( 'perl=s' => \$perl, 'jobs=s' => \$jobs, 'recenturl' => \$recenturl );
+  
+      my @pending;
       if ( $jobs ) {
         open my $fh, "<$jobs" or die "$jobs: $!\n";
         while (<$fh>) {
@@ -22,37 +22,41 @@ SYNOPSIS
         }
         close($fh);
       }
-      
-  my $smoker = POE::Component::CPAN::Reporter->spawn( alias => 'smoker' );
-      
-  POE::Session->create(
+  
+      my $smoker = POE::Component::CPAN::Reporter->spawn( alias => 'smoker' );
+  
+      POE::Session->create(
             package_states => [
                'main' => [ qw(_start _stop _results _recent) ],
             ],
             heap => { perl => $perl, pending => \@pending },
       );
-      
-  $poe_kernel->run();
+  
+      $poe_kernel->run();
       exit 0;
-      
-  sub _start {
+  
+      sub _start {
         my ($kernel,$heap) = @_[KERNEL,HEAP];
         if ( @{ $heap->{pending} } ) {
           $kernel->post( 'smoker', 'submit', { event => '_results', perl => $heap->{perl}, module => $_ } ) 
             for @{ $heap->{pending} };
         }
         else {
+          POE::Component::SmokeBox::Recent->recent( 
+              url => $recenturl || 'http://www.cpan.org/',
+              event => 'recent',
+          );
           $kernel->post( 'smoker', 'recent', { event => '_recent', perl => $heap->{perl} } ) 
         }
         undef;
       }
-      
-  sub _stop {
+  
+      sub _stop {
         $poe_kernel->call( 'smoker', 'shutdown' );
         undef;
       }
-      
-  sub _results {
+  
+      sub _results {
         my $job = $_[ARG0];
         print STDOUT "Module: ", $job->{module}, "\n";
         print STDOUT "$_\n" for @{ $job->{log} };
@@ -61,6 +65,7 @@ SYNOPSIS
 
       sub _recent {
         my ($kernel,$heap,$job) = @_[KERNEL,HEAP,ARG0];
+        die $job->{error}, "\n" if $job->{error};
         $kernel->post( 'smoker', 'submit', { event => '_results', perl => $heap->{perl}, module => $_ } )
             for @{ $job->{recent} };
         undef;
@@ -83,8 +88,15 @@ DESCRIPTION
     You are responsible for installing and configuring CPAN and
     CPAN::Reporter and setting up a suitable perl smoking environment.
 
+DEPRECATION NOTICE
+    POE::Component::CPAN::Reporter has been superceded by
+    POE::Component::SmokeBox. The minireporter script has been superceded by
+    App::SmokeBox::Mini.
+
+    Consider this module deprecated.
+
 CONSTRUCTOR
-    spawn
+    "spawn"
         Spawns a new component session and waits for requests. Takes the
         following optional arguments:
 
@@ -94,48 +106,48 @@ CONSTRUCTOR
           'idle', adjust the job idle time ( default: 600 seconds ), before jobs get killed;
           'timeout', adjust the total job runtime ( default: 3600 seconds ), before a job is killed;
           'perl', which perl executable to use as a default, instead of S^X;
-          'reporter_dir', default path where CPAN::Reporter should look for it's config.ini file;
+          'reporterdir', default path where CPAN::Reporter should look for it's config.ini file;
           'no_grp_kill', set to a true value to disable process group kill;
 
         Returns a POE::Component::CPAN::Reporter object.
 
 METHODS
-    session_id
+    "session_id"
         Returns the POE::Session ID of the component's session.
 
-    pending_jobs
+    "pending_jobs"
         In a scalar context returns the number of currently pending jobs. In
         a list context, returns a list of hashrefs which are the jobs
         currently waiting in the job queue.
 
-    current_job
+    "current_job"
         Returns a hashref containing details of the currently executing
         smoke job. Returns undef if there isn't a job currently running.
 
-    current_log
+    "current_log"
         Returns an arrayref of log output from the currently executing smoke
         job. Returns undef if there isn't a job currently running.
 
-    shutdown
+    "shutdown"
         Terminates the component. Any pending jobs are cancelled and the
         currently running job is allowed to complete gracefully. Requires no
         additional parameters.
 
-    pause_queue
+    "pause_queue"
         Pauses processing of the jobs. The current job will finish
         processing, but any pending jobs will not be processed until the
         queue is resumed. This does not affect the continued submission of
         jobs to the queue.
 
-    resume_queue
+    "resume_queue"
         Resumes the processing of the pending jobs queue if it has been
         previously paused.
 
-    paused
+    "paused"
         Returns a true value if the job queue is paused or a false value
         otherwise.
 
-    statistics
+    "statistics"
         Returns some statistical that the component gathers. In a list
         context returns a list of data. In a scalar context returns an
         arrayref of the said data.
@@ -159,26 +171,26 @@ INPUT EVENTS
       'session', which session the result event should go to (Default is the sender);
       'perl', which perl executable to use (Default whatever is in $^X);
       'debug', turn on or off debugging information for this particular job;
-      'reporter_dir', the path where CPAN::Reporter should look for it's config.ini file;
+      'reporterdir', the path where CPAN::Reporter should look for it's config.ini file;
 
     It is possible to pass arbitrary keys in the hash. These should be
     proceeded with an underscore to avoid possible future API clashes.
 
-    submit
-    push
+    "submit"
+    "push"
         Inserts the requested job at the end of the queue ( if there is one
         ).
 
-    unshift
+    "unshift"
         Inserts the requested job at the head of the queue ( if there is one
         ). Guarantees that that job is processed next.
 
-    shutdown
+    "shutdown"
         Terminates the component. Any pending jobs are cancelled and the
         currently running job is allowed to complete gracefully. Requires no
         additional parameters.
 
-    check
+    "check"
         Checks whether CPAN::Reporter is installed. Takes one parameter a
         hashref with the following keys defined:
 
@@ -189,7 +201,7 @@ INPUT EVENTS
         It is possible to pass arbitrary keys in the hash. These should be
         proceeded with an underscore to avoid possible future API clashes.
 
-    indices
+    "indices"
         Forces an update of the CPAN indices. Takes one parameter, a hashref
         with the following keys defined:
 
@@ -236,7 +248,7 @@ AUTHOR
     Chris 'BinGOs' Williams <chris@bingosnet.co.uk>
 
 LICENSE
-    Copyright "(c)" Chris Williams.
+    Copyright © Chris Williams.
 
     This module may be used, modified, and distributed under the same terms
     as Perl itself. Please see the license that came with your Perl
@@ -250,6 +262,10 @@ KUDOS
     CPAN::Reporter
 
 SEE ALSO
+    POE::Component::SmokeBox
+
+    App::SmokeBox::Mini
+
     minireporter
 
     POE

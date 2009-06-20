@@ -1,6 +1,10 @@
 POE::Component::CPAN::Reporter
 ==============================
 
+0.06	Sat Jun 20 08:33:28 BST 2009
+	- Meta updates to Makefile.PL
+	- Deprecation warnings.
+
 0.04	Mon Aug  4 10:25:21 BST 2008
 	- Added --logdir option to minireporter
 
