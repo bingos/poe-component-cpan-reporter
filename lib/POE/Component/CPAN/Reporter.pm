@@ -1,12 +1,11 @@
 package POE::Component::CPAN::Reporter;
 
+#ABSTRACT: Bringing the power of POE to CPAN smoke testing.
+
 use strict;
 use warnings;
 use POE qw(Wheel::Run);
 use Storable;
-use vars qw($VERSION);
-
-$VERSION = '0.06';
 
 my $GOT_KILLFAM;
 
@@ -36,7 +35,7 @@ sub spawn {
   my $self = bless \%opts, $package;
   $self->{session_id} = POE::Session->create(
 	object_states => [
-	   $self => { shutdown  => '_shutdown', 
+	   $self => { shutdown  => '_shutdown',
 		      submit    => '_command',
 		      push      => '_command',
 		      unshift   => '_command',
@@ -248,7 +247,7 @@ sub _sig_child {
   }
   $job->{end_time} = time();
   unless ( $self->{debug} ) {
-    delete $job->{program}; 
+    delete $job->{program};
     delete $job->{program_args};
   }
   # Stats
@@ -435,31 +434,30 @@ sub _get_pids {
       if ($proc->ppid == $kid) {
 	my $pid = $proc->pid;
 	push @pids, $pid, _get_pids( $procs, $pid );
-      } 
+      }
     }
   }
   @pids;
 }
 
 1;
-__END__
 
-=head1 NAME
+=pod
 
-POE::Component::CPAN::Reporter - Bringing the power of POE to CPAN smoke testing.
+=encoding UTF-8
 
 =head1 SYNOPSIS
 
   use strict;
   use POE qw(Component::CPAN::Reporter Component::SmokeBox::Recent);
   use Getopt::Long;
-  
+
   $|=1;
-  
+
   my ($perl, $jobs, $recenturl);
-  
+
   GetOptions( 'perl=s' => \$perl, 'jobs=s' => \$jobs, 'recenturl' => \$recenturl );
-  
+
   my @pending;
   if ( $jobs ) {
     open my $fh, "<$jobs" or die "$jobs: $!\n";
@@ -469,24 +467,24 @@ POE::Component::CPAN::Reporter - Bringing the power of POE to CPAN smoke testing
     }
     close($fh);
   }
-  
+
   my $smoker = POE::Component::CPAN::Reporter->spawn( alias => 'smoker' );
-  
+
   POE::Session->create(
-  	package_states => [
-  	   'main' => [ qw(_start _stop _results _recent) ],
-  	],
-  	heap => { perl => $perl, pending => \@pending },
+    package_states => [
+     'main' => [ qw(_start _stop _results _recent) ],
+    ],
+    heap => { perl => $perl, pending => \@pending },
   );
-  
+
   $poe_kernel->run();
   exit 0;
-  
+
   sub _start {
     my ($kernel,$heap) = @_[KERNEL,HEAP];
     if ( @{ $heap->{pending} } ) {
       $kernel->post( 'smoker', 'submit', { event => '_results', perl => $heap->{perl}, module => $_ } ) 
-  	for @{ $heap->{pending} };
+        for @{ $heap->{pending} };
     }
     else {
       POE::Component::SmokeBox::Recent->recent( 
@@ -497,12 +495,12 @@ POE::Component::CPAN::Reporter - Bringing the power of POE to CPAN smoke testing
     }
     undef;
   }
-  
+
   sub _stop {
     $poe_kernel->call( 'smoker', 'shutdown' );
     undef;
   }
-  
+
   sub _results {
     my $job = $_[ARG0];
     print STDOUT "Module: ", $job->{module}, "\n";
@@ -518,7 +516,7 @@ POE::Component::CPAN::Reporter - Bringing the power of POE to CPAN smoke testing
     undef;
   }
 
-  
+
 =head1 DESCRIPTION
 
 POE::Component::CPAN::Reporter is a POE-based framework around L<CPAN> and L<CPAN::Reporter>.
@@ -612,7 +610,7 @@ The data is returned in the following order:
   The current average job run time;
   The minimum job run time observed;
   The maximum job run time observed;
-  
+
 =back
 
 =head1 INPUT EVENTS
@@ -648,7 +646,7 @@ Terminates the component. Any pending jobs are cancelled and the currently runni
 
 =item C<check>
 
-Checks whether L<CPAN::Reporter> is installed. Takes one parameter a hashref with the following keys 
+Checks whether L<CPAN::Reporter> is installed. Takes one parameter a hashref with the following keys
 defined:
 
   'event', an event name for the results to be sent to (Mandatory);
@@ -657,7 +655,7 @@ defined:
 
 It is possible to pass arbitrary keys in the hash. These should be proceeded with an underscore to avoid
 possible future API clashes.
-  
+
 =item C<indices>
 
 Forces an update of the CPAN indices. Takes one parameter, a hashref with the following keys defined:
@@ -701,21 +699,11 @@ used to fix the issues surrounding L<POE::Wheel::Run> and forking alternative co
 
 The code is still experimental though. Be warned.
 
-=head1 AUTHOR
-
-Chris 'BinGOs' Williams <chris@bingosnet.co.uk>
-
-=head1 LICENSE
-
-Copyright E<copy> Chris Williams.
-
-This module may be used, modified, and distributed under the same terms as Perl itself. Please see the license that came with your Perl distribution for details.
-
 =head1 KUDOS
 
 Many thanks to all the people who have helped me with developing this module.
 
-Especially to Andreas J. König for L<CPAN> and David Golden for L<CPAN::Reporter>
+Especially to Andreas J. KÃ¶nig for L<CPAN> and David Golden for L<CPAN::Reporter>
 
 =head1 SEE ALSO
 

@@ -1,0 +1,25 @@
+$|=1;
+
+print <<NOTICE;
+
+\a--------------------------------------------------------------
+This distribution and associated tools have been deprecated.
+
+Please investigate POE::Component::SmokeBox and
+App::SmokeBox::Mini instead.
+
+Thanks.
+--------------------------------------------------------------
+
+NOTICE
+
+sleep 5;
+
+if ( is_os('MSWin32') ) {
+  requires( 'Win32::Process' => 0 );
+  requires( 'Win32::Job' => 0 );
+}
+unless ( can_use('Proc::ProcessTable') ) {
+  requires('Proc::ProcessTable',0) if prompt_default_no("Do you want to enable optional Proc::ProcessTable support");
+}
+

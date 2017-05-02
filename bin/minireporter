@@ -1,4 +1,6 @@
 #!perl
+# PODNAME: minireporter
+#ABSTRACT: Example script for POE::Component::CPAN::Reporter
 use strict;
 BEGIN { eval "use Event;"; }
 use File::Spec;
@@ -75,11 +77,11 @@ sub _start_smoking {
   my ($kernel,$heap) = @_[KERNEL,HEAP];
   $heap->{_start_time} = time();
   if ( @{ $heap->{pending} } ) {
-    $kernel->post( 'smoker', 'submit', { event => '_results', module => $_, debug => $debug } ) 
+    $kernel->post( 'smoker', 'submit', { event => '_results', module => $_, debug => $debug } )
 	for @{ $heap->{pending} };
-  } 
+  }
   else {
-    POE::Component::SmokeBox::Recent->recent( 
+    POE::Component::SmokeBox::Recent->recent(
         url => $recenturl || 'ftp://ftp.funet.fi/pub/CPAN/',
         event => '_recent',
     );
@@ -182,11 +184,8 @@ sub _kill_error {
   delete $heap->{kill_logs}->{ $wheel_id };
   return;
 }
-__END__
 
-=head1 NAME
-
-minireporter - Example script for POE::Component::CPAN::Reporter
+=pod
 
 =head1 SYNOPSIS
 
@@ -254,10 +253,6 @@ Specify a directory location ( it must exist ) where C<minireporter> will write 
 forcefully terminates due to excessive idle or run time.
 
 =back
-
-=head1 AUTHOR
-
-Chris 'BinGOs' Williams <chris@bingosnet.co.uk>
 
 =head1 SEE ALSO
 
